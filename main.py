@@ -136,9 +136,12 @@ def battleturn(partybattle, enemybattle):
     for girls in partybattle:
         print(f"{girls.name} is {attackordefend.get(girls.command)}")
         girlattack(girls, partytarget)
-    checkifenemydead()
+        checkifenemydead()
+        if partytarget >= len(enemyparty):
+            partytarget = 0
+            print(f"Targeted enemy defeated. Retargeting {enemyparty[partytarget].name} this turn.")
+
     chainburstcheck()
-    checkifenemydead()
 
     for enemies in enemybattle:
         enemyattack(enemies)
@@ -183,7 +186,6 @@ def playertarget():
     print(f"Targeting {enemyparty[targetget].name} this turn.")
     return targetget
 
-
 def girlcommand():
     command = ""
     for girls in party:
@@ -192,7 +194,7 @@ def girlcommand():
             print(f"Command for {girls.name}?")
             while command != 1 and command != 2:
                 try:
-                    command = int(input("1 to attack, 2 to defend, 3 for skill list"))
+                    command = int(input("1 to attack, 2 to defend, 3 for skill list\n"))
                     if command == 3:
                         skilllist(girls)
                 except ValueError:
@@ -235,6 +237,7 @@ def skillrecovercooldown():
                 girls.skill[i].turnsleft = girls.skill[i].turnsleft - 1
             i = i + 1
 
+
 def skillrecovercooldownenemy():
     for enemy in enemyparty:
         if enemy.turnsleft > 0:
@@ -265,7 +268,6 @@ def checkifenemydead():
     for enemy in enemyparty:
         if enemy.currenthp <= 0:
             enemy.status.append("KO")
-
     # Cleaning up the enemy list properly
     while "KO" in enemy.status:
         for enemy in enemyparty:
@@ -291,6 +293,7 @@ def chainburstcheck():
         for targets in enemyparty:
             targets.currenthp = targets.currenthp - bonusdamage
             print(f"{targets.name} takes {bonusdamage} bonus damage!")
+            checkifenemydead()
 
 
 def enemyattack(enemy):
