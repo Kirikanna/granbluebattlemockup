@@ -137,13 +137,13 @@ def battleturn(partybattle, enemybattle):
     for girls in partybattle:
         print(f"{girls.name} is {attackordefend.get(girls.command)}")
         girlattack(girls, partytarget)
-        checkifenemydead()
         if enemysizecheck > len(enemyparty):
             enemysizecheck = len(enemyparty)
             partytarget = 0
             print(f"Targeted enemy defeated. Retargeting {enemyparty[partytarget].name} this turn.")
 
     chainburstcheck()
+    checkifenemydead()
 
     for enemies in enemybattle:
         enemyattack(enemies)
@@ -248,6 +248,17 @@ def skillrecovercooldownenemy():
 def setchargebarzero(girls):
      girls.currentcharge = 0
 
+def damagecalc(attacker, defender):
+    result = attacker.attack - defender.defense
+    return result
+
+def damageresult(defender,finaldamage):
+    if finaldamage <= 0:
+        print(f"{defender.name} does not take any damage.")
+    else:
+        defender.currenthp = defender.currenthp - finaldamage
+        print(f"{defender.name} takes {finaldamage} damage!")
+
 
 def girlattack(girls, partystarget):
     targetposition = 0
@@ -264,10 +275,9 @@ def girlattack(girls, partystarget):
                 print(f"{girls.name} attacks {target.name}!")
                 girls.currentcharge = girls.currentcharge + 20
                 if girls.currentcharge > girls.chargecap: girls.currentcharge = girls.chargecap
-                damage = (girls.attack - target.defense)
-            if damage < 0: damage = 0
-            target.currenthp = target.currenthp - damage
-            print(f"{target.name} takes {damage} damage!")
+                damage = damagecalc(girls, target)
+            damageresult(target, damage)
+            checkifenemydead()
         targetposition = targetposition + 1
 
 
@@ -298,9 +308,8 @@ def chainburstcheck():
         print("More than one charge attack this turn! Bonus damage!")
         bonusdamage = bonusdamage * chargeattacksthisturn
         for targets in enemyparty:
-            targets.currenthp = targets.currenthp - bonusdamage
-            print(f"{targets.name} takes {bonusdamage} bonus damage!")
-            checkifenemydead()
+            damageresult(targets, bonusdamage)
+        checkifenemydead()
 
 
 def enemyattack(enemy):
@@ -318,13 +327,12 @@ def enemyattack(enemy):
                 enemy.turnsleft = enemy.turnsleft + enemy.cooldown
             else:
                 print(f"{enemy.name} attacks {girls.name}!")
-                damage = enemy.attack - girls.defense
+                damage = damagecalc(enemy, girls)
                 if girls.command == 2:
                     damage = round(damage / 2)
                     print("Damage partially blocked!")
                 if damage < 0: damage = 0
-                girls.currenthp = girls.currenthp - damage
-                print(f"{girls.name} has taken {damage} damage!")
+                damageresult(girls, damage)
                 checkifpartydefeat()
                 i = i + 1
 
