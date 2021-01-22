@@ -56,7 +56,7 @@ class Enemy(object):
         return self.name
 
     def getstats(self):
-        return f"{self.eposition} {self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
+        return f"{self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
                f"Defense {self.defense}, Status {self.status}, Turns before using Skill: {self.turnsleft}"
 
 
@@ -129,6 +129,7 @@ def battleturn(partybattle, enemybattle):
     displayenemystats()
     partytarget = playertarget()
     girlcommand()
+    enemysizecheck = len(enemyparty)
     print()
     for girls in enemybattle:
         print(girls.getstats())
@@ -137,7 +138,8 @@ def battleturn(partybattle, enemybattle):
         print(f"{girls.name} is {attackordefend.get(girls.command)}")
         girlattack(girls, partytarget)
         checkifenemydead()
-        if partytarget >= len(enemyparty):
+        if enemysizecheck > len(enemyparty):
+            enemysizecheck = len(enemyparty)
             partytarget = 0
             print(f"Targeted enemy defeated. Retargeting {enemyparty[partytarget].name} this turn.")
 
@@ -171,7 +173,7 @@ def displayenemystats():
     position = 0
     for enemies in enemyparty:
         position = position + 1
-        print(enemies.getstats())
+        print(f"{position} {enemies.getstats()}")
 
 
 def playertarget():
@@ -243,16 +245,21 @@ def skillrecovercooldownenemy():
         if enemy.turnsleft > 0:
             enemy.turnsleft = enemy.turnsleft - 1
 
+def setchargebarzero(girls):
+     girls.currentcharge = 0
+
 
 def girlattack(girls, partystarget):
     targetposition = 0
     for target in enemyparty:
         if girls.command == 1 and partystarget == targetposition:
             if girls.currentcharge == girls.chargecap:
+                #Sets flag for chain burst
                 girls.chargeattackused = True
+
                 print(f"{girls.name} uses a charge attack!")
                 damage = (girls.attack * 3)
-                girls.currentcharge = 0
+                setchargebarzero(girls)
             else:
                 print(f"{girls.name} attacks {target.name}!")
                 girls.currentcharge = girls.currentcharge + 20
@@ -264,19 +271,19 @@ def girlattack(girls, partystarget):
         targetposition = targetposition + 1
 
 
+
 def checkifenemydead():
     for enemy in enemyparty:
         if enemy.currenthp <= 0:
             enemy.status.append("KO")
-    # Cleaning up the enemy list properly
-    while "KO" in enemy.status:
-        for enemy in enemyparty:
-            if "KO" in enemy.status:
-                print(f"{enemy.name} has been defeated.")
-                enemyparty.remove(enemy)
-            if not enemyparty:
-                print("VICTORY!")
-                checkbattlefinish(True)
+        while "KO" in enemy.status:
+            for enemy in enemyparty:
+                if "KO" in enemy.status:
+                    print(f"{enemy.name} has been defeated.")
+                    enemyparty.remove(enemy)
+                if not enemyparty:
+                    print("VICTORY!")
+                    checkbattlefinish(True)
 
 
 def chainburstcheck():
