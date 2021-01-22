@@ -1,9 +1,9 @@
 # granbluebattlemockup
 A mockup of Granblue's Battle system
 
-TODO:
-Skills that do things
-Improve targeting
-Summons
-Using potions
-Toggle attack/defend 
+TODO:<br>
+Skills that do things<br>
+Improve targeting<br>
+Summons<br>
+Using potions<br>
+Toggle attack/defend<br> 
