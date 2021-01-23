@@ -117,7 +117,6 @@ battle = False
 premadeparty = [Megu, Tomoka]
 party = premadeparty
 enemyparty = [Dummy, Dummy1, Dummy2]
-attackordefend = {0: "doing nothing", 1: "attacking", 2: "defending", 3: "skill", 4: "execute action"}
 chargeonoroff = {True: "On", False: "Off"}
 
 #Placeholder for skills
@@ -130,16 +129,14 @@ tar = 0
 def battleturn(partybattle, enemybattle):
     displaypartystats()
     displayenemystats()
-    #action()
     partytarget = playertarget()
-    girlcommand()
+    action()
+    #girlcommand()
     enemysizecheck = len(enemyparty)
     print()
-    for girls in enemybattle:
-        print(girls.getstats())
 
     for girls in partybattle:
-        print(f"{girls.name} is {attackordefend.get(girls.command)}")
+        print(f"{girls.name} is {actiondisplay(girls.command)}")
         girlattack(girls, partytarget)
         if enemysizecheck > len(enemyparty):
             enemysizecheck = len(enemyparty)
@@ -158,9 +155,24 @@ def battleturn(partybattle, enemybattle):
     return checkbattlefinish(battle)
 
 
+def messagedisplay(message):
+    battlemessage = {0: "Starting battle.",
+                     1: "Turn start.",
+                     2: "Who are you targeting?",
+                     3: "Going back to commands.",
+                     4: "More than one charge attack this turn! Bonus damage!",
+                     5: "Battle has finished.",
+                     6: "Defeat...",
+                     7: "is definitely ready for a Charge Attack this turn!",
+                     8: "Use which skill?",
+                     9: "Everyone in the party that can fight will now attack."}
+    return(battlemessage.get(message))
+
+
+
 def checkbattlefinish(battledone):
     if battledone is True:
-        print("Battle has finished.")
+        print(messagedisplay(5))
         return exit()
     else:
         battleturn(party, enemyparty)
@@ -179,28 +191,29 @@ def displayenemystats():
         position = position + 1
         print(f"{position} {enemies.getstats()}")
 
+def actiondisplay(display):
+    action = {0: "doing nothing", 1: "attacking", 2: "defending", 3: "skill", 4: "execute action"}
+    return action.get(display)
+
+
 #Placeholder
 def action():
-    choice = 0
-    while choice != 1 and choice != 2:
+    choice = ""
+    while choice != "a" and choice != "c":
         try:
-            choice = int(input("1 to continue, 2 to fully heal\n"))
+            choice = input("[A] to attack with everyone, [C] to choose commands manually\n")
             print(choice)
-            if choice == 2:
-                for girl in party:
-                    displaypartystats()
-                    girl.currenthp = girl.hp
-                    girl.status.remove("KO")
-
+            if choice.upper() == "A":
+                girlauto()
+            if choice.upper() == "C":
+                girlcommand()
         except ValueError:
             print("Enter a number please.")
 
 
-
-
 def playertarget():
     targetget = 0
-    print("Who are you targeting?")
+    print(messagedisplay(2))
     while targetget < 1 or targetget > len(enemyparty):
         try:
             targetget = int(input())
@@ -210,6 +223,14 @@ def playertarget():
     print(f"Targeting {enemyparty[targetget].name} this turn.")
     return targetget
 
+def girlauto():
+    for girls in party:
+        if "KO" not in girls.status:
+            girls.command = 1
+        else:
+            girls.command = 0
+    print(messagedisplay(9))
+
 def girlcommand():
     command = ""
     for girls in party:
@@ -217,8 +238,7 @@ def girlcommand():
             print(girls.getstats())
             print(f"Command for {girls.name}?")
             if girls.currentcharge == girls.chargecap:
-                print(f"{girls.name} is definitely ready for a Charge Attack this turn!")
-
+                print(f"{girls.name} {messagedisplay(7)}")
             while command != 1 and command != 2:
                 try:
                     command = int(input("1 to attack, 2 to defend, 3 for skill list, 4 to toggle charge attack\n"))
@@ -247,9 +267,9 @@ def skilllist(girls):
         for skills in girls.skill:
             position = position + 1
             print(f"{position} {skills.getskillinfo()}")
-        command = int(input("Use which skill?"))
+        command = int(input(messagedisplay(8)))
         if command > numberofskills:
-            print("Going back to commands.")
+            print(messagedisplay(4))
             break
         if girls.skill[command - 1].turnsleft > 0:
             print(
@@ -336,7 +356,7 @@ def chainburstcheck():
             chargeattacksthisturn = chargeattacksthisturn + 1
             girls.chargeattackused = False
     if chargeattacksthisturn > 1:
-        print("More than one charge attack this turn! Bonus damage!")
+        print(messagedisplay(4))
         bonusdamage = bonusdamage * chargeattacksthisturn
         for targets in enemyparty:
             damageresult(targets, bonusdamage)
@@ -380,7 +400,7 @@ def checkifwiped(girls):
     for girls in party:
         if "KO" not in girls.status:
             checkbattlefinish(False)
-    print("Defeat...")
+    print(messagedisplay(6))
     checkbattlefinish(True)
 
 
