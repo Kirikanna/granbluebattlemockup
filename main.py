@@ -131,7 +131,6 @@ def battleturn(partybattle, enemybattle):
     displayenemystats()
     partytarget = playertarget()
     action()
-    #girlcommand()
     enemysizecheck = len(enemyparty)
     print()
 
@@ -196,16 +195,14 @@ def actiondisplay(display):
     return action.get(display)
 
 
-#Placeholder
 def action():
     choice = ""
-    while choice != "a" and choice != "c":
+    while choice.upper() != "A" and choice != "C":
         try:
             choice = input("[A] to attack with everyone, [C] to choose commands manually\n")
-            print(choice)
-            if choice.upper() == "A":
+            if choice.upper() == 'A':
                 girlauto()
-            if choice.upper() == "C":
+            if choice.upper() == 'C':
                 girlcommand()
         except ValueError:
             print("Enter a number please.")
@@ -218,7 +215,7 @@ def playertarget():
         try:
             targetget = int(input())
         except ValueError:
-            print("Enter a number please.")
+            print("Enter a valid target please.")
     targetget = targetget - 1
     print(f"Targeting {enemyparty[targetget].name} this turn.")
     return targetget
