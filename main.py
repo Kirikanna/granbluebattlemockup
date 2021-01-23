@@ -90,14 +90,14 @@ class EnemySkills(object):
 
 # characters
 # Character(name, maxhp, attack, defense, chargecap, currentcharge
-Megu = Character("Megu", 20, 5, 0, 100, [], "", 1)
+Megu = Character("Megu", 1, 5, 0, 100, [], "", 1)
 Bonk = Skills("Bonk", 20, 5, [], 1)
 Bonks = Skills("Bonks", 20, 5, [], 2)
 Bonkss = Skills("Bonkss", 20, 5, [], 1)
 Megu.skill.append(Bonk)
 Megu.skill.append(Bonks)
 Megu.skill.append(Bonkss)
-Tomoka = Character("Tomoka", 30, 10, 0, 100, [], "", 2)
+Tomoka = Character("Tomoka", 10, 10, 0, 100, [], "", 2)
 
 # Enemy
 # Enemy(name, maxhp, attack, defense, chargecap, currentcharge
@@ -252,7 +252,7 @@ def damagecalc(attacker, defender):
     result = attacker.attack - defender.defense
     return result
 
-def damageresult(defender,finaldamage):
+def damageresult(defender, finaldamage):
     if finaldamage <= 0:
         print(f"{defender.name} does not take any damage.")
     else:
@@ -338,16 +338,22 @@ def enemyattack(enemy):
 
 
 def checkifpartydefeat():
-    koedcount = 0
     for girls in party:
         if girls.currenthp <= 0 and "KO" not in girls.status:
             girls.status.append("KO")
             girls.currenthp = 0
             print(f"{girls.name} was knocked out.")
-        if "KO" in girls.status: koedcount = koedcount + 1
-        if koedcount >= len(party):
-            print("Defeat...")
-            checkbattlefinish(True)
+    checkifwiped(girls)
+
+def checkifwiped(girls):
+    for girls in party:
+        if "KO" not in girls.status:
+            print("Still in there")
+            checkbattlefinish(False)
+    print("Defeat...")
+    checkbattlefinish(True)
+
+
 
 
 battleturn(party, enemyparty)
