@@ -18,6 +18,7 @@ class Character(object):
         self.targeting = 1
         self.chargeattackused = False
         self.skill = []
+        self.togglecharge = True
 
     def __bool__(self):
         if "KO" in self.status:
@@ -30,7 +31,7 @@ class Character(object):
     def getstats(self):
         return f"{self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
                f"Defense {self.defense}, Charge {self.currentcharge}/{self.chargecap}, " \
-               f"Status {self.status}"
+               f"Status {self.status}, Charge attack: {chargeonoroff.get(self.togglecharge)}"
 
 
 # define the Enemy class
@@ -89,8 +90,8 @@ class EnemySkills(object):
 
 
 # characters
-# Character(name, maxhp, attack, defense, chargecap, currentcharge
-Megu = Character("Megu", 1, 5, 0, 100, [], "", 1)
+# Character(name, maxhp, attack, defense, chargecap, status
+Megu = Character("Megu", 50, 5, 0, 100, [], "", 1)
 Bonk = Skills("Bonk", 20, 5, [], 1)
 Bonks = Skills("Bonks", 20, 5, [], 2)
 Bonkss = Skills("Bonkss", 20, 5, [], 1)
@@ -115,18 +116,21 @@ battle = False
 
 premadeparty = [Megu, Tomoka]
 party = premadeparty
-numberko = 0
 enemyparty = [Dummy, Dummy1, Dummy2]
 attackordefend = {0: "doing nothing", 1: "attacking", 2: "defending", 3: "skill", 4: "execute action"}
+chargeonoroff = {True: "On", False: "Off"}
+
+#Placeholder for skills
 targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally", 4: "whole party", 5: "random enemy"
     , 6: "random ally"}
+
 tar = 0
-chargeattacks = 0
 
 
 def battleturn(partybattle, enemybattle):
     displaypartystats()
     displayenemystats()
+    #action()
     partytarget = playertarget()
     girlcommand()
     enemysizecheck = len(enemyparty)
@@ -175,6 +179,24 @@ def displayenemystats():
         position = position + 1
         print(f"{position} {enemies.getstats()}")
 
+#Placeholder
+def action():
+    choice = 0
+    while choice != 1 and choice != 2:
+        try:
+            choice = int(input("1 to continue, 2 to fully heal\n"))
+            print(choice)
+            if choice == 2:
+                for girl in party:
+                    displaypartystats()
+                    girl.currenthp = girl.hp
+                    girl.status.remove("KO")
+
+        except ValueError:
+            print("Enter a number please.")
+
+
+
 
 def playertarget():
     targetget = 0
@@ -194,11 +216,18 @@ def girlcommand():
         if "KO" not in girls.status:
             print(girls.getstats())
             print(f"Command for {girls.name}?")
+            if girls.currentcharge == girls.chargecap:
+                print(f"{girls.name} is definitely ready for a Charge Attack this turn!")
+
             while command != 1 and command != 2:
                 try:
-                    command = int(input("1 to attack, 2 to defend, 3 for skill list\n"))
+                    command = int(input("1 to attack, 2 to defend, 3 for skill list, 4 to toggle charge attack\n"))
                     if command == 3:
                         skilllist(girls)
+                    if command == 4:
+                        girls.togglecharge = not girls.togglecharge
+                        print(f"Charge attack set to {chargeonoroff.get(girls.togglecharge)}")
+                        print(girls.getstats())
                 except ValueError:
                     print("Enter a number please.")
             girls.command = command
@@ -259,21 +288,23 @@ def damageresult(defender, finaldamage):
         defender.currenthp = defender.currenthp - finaldamage
         print(f"{defender.name} takes {finaldamage} damage!")
 
+def chargegain(gainer, chargeamount):
+    gainer.currentcharge = gainer.currentcharge + chargeamount
+
+
 
 def girlattack(girls, partystarget):
     targetposition = 0
     for target in enemyparty:
         if girls.command == 1 and partystarget == targetposition:
-            if girls.currentcharge == girls.chargecap:
+            if girls.currentcharge == girls.chargecap and girls.togglecharge is True:
                 #Sets flag for chain burst
                 girls.chargeattackused = True
-
                 print(f"{girls.name} uses a charge attack!")
                 damage = (girls.attack * 3)
-                setchargebarzero(girls)
             else:
                 print(f"{girls.name} attacks {target.name}!")
-                girls.currentcharge = girls.currentcharge + 20
+                chargegain(girls, 20)
                 if girls.currentcharge > girls.chargecap: girls.currentcharge = girls.chargecap
                 damage = damagecalc(girls, target)
             damageresult(target, damage)
@@ -348,12 +379,9 @@ def checkifpartydefeat():
 def checkifwiped(girls):
     for girls in party:
         if "KO" not in girls.status:
-            print("Still in there")
             checkbattlefinish(False)
     print("Defeat...")
     checkbattlefinish(True)
-
-
 
 
 battleturn(party, enemyparty)
