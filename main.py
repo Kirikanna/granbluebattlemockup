@@ -129,8 +129,7 @@ tar = 0
 def battleturn(partybattle, enemybattle):
     displaypartystats()
     displayenemystats()
-    partytarget = playertarget()
-    action()
+    partytarget = action()
     enemysizecheck = len(enemyparty)
     print()
 
@@ -165,8 +164,7 @@ def messagedisplay(message):
                      7: "is definitely ready for a Charge Attack this turn!",
                      8: "Use which skill?",
                      9: "Everyone in the party that can fight will now attack."}
-    return(battlemessage.get(message))
-
+    return battlemessage.get(message)
 
 
 def checkbattlefinish(battledone):
@@ -197,28 +195,25 @@ def actiondisplay(display):
 
 def action():
     choice = ""
+    target = 0
     while choice.upper() != "A" and choice != "C":
         try:
-            choice = input("[A] to attack with everyone, [C] to choose commands manually\n")
+            choice = input("[A] to attack with everyone, "
+                           "[C] to choose commands manually, "
+                           "Input number to manually choose a target\n")
             if choice.upper() == 'A':
                 girlauto()
+                return target
             if choice.upper() == 'C':
                 girlcommand()
+                return target
+            if len(enemyparty) >= int(choice) > 0:
+                totarget = int(choice) - 1
+                print(f"Targeting {enemyparty[totarget].name} this turn.")
+                target = totarget
         except ValueError:
-            print("Enter a number please.")
+            print("Enter a valid selection please.")
 
-
-def playertarget():
-    targetget = 0
-    print(messagedisplay(2))
-    while targetget < 1 or targetget > len(enemyparty):
-        try:
-            targetget = int(input())
-        except ValueError:
-            print("Enter a valid target please.")
-    targetget = targetget - 1
-    print(f"Targeting {enemyparty[targetget].name} this turn.")
-    return targetget
 
 def girlauto():
     for girls in party:
@@ -309,7 +304,6 @@ def chargegain(gainer, chargeamount):
     gainer.currentcharge = gainer.currentcharge + chargeamount
 
 
-
 def girlattack(girls, partystarget):
     targetposition = 0
     for target in enemyparty:
@@ -318,6 +312,7 @@ def girlattack(girls, partystarget):
                 #Sets flag for chain burst
                 girls.chargeattackused = True
                 print(f"{girls.name} uses a charge attack!")
+                setchargebarzero(girls)
                 damage = (girls.attack * 3)
             else:
                 print(f"{girls.name} attacks {target.name}!")
