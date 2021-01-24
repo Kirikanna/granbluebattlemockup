@@ -203,6 +203,7 @@ def action():
         try:
             choice = input("[A] to execute all queued actions, "
                            "[C] to choose commands manually, "
+                           "[P] to use potions, "
                            "Input number to manually choose a target\n")
             if choice.upper() == 'A':
                 girlauto()
@@ -210,6 +211,8 @@ def action():
             if choice.upper() == 'C':
                 girlcommand()
                 return target
+            if choice.upper() == 'P':
+                potionuse()
             if len(enemyparty) >= int(choice) > 0:
                 totarget = int(choice) - 1
                 target = totarget
@@ -257,6 +260,43 @@ def girlcommand():
         except ValueError:
             print("Enter a valid selection please.")
     return 0
+
+def potionuse():
+    choice = ""
+    healed = 0
+    while choice.upper() != "C":
+        try:
+            displaypartystats()
+            choice = input(f"Heal who with green potion? C to go back to previous selection\n")
+            if choice.upper() == 'C':
+                displaypartystats()
+                break
+            if len(party) >= int(choice) > 0:
+                i = 0
+                tochoose = int(choice) - 1
+                for girls in party:
+                    if "KO" in girls.status and i == tochoose:
+                        print(f"{girls.name} is knocked out, cannot heal!")
+                        potionuse()
+                        break
+                    if tochoose == i and girls.currenthp >= girls.hp:
+                        print(f"{girls.name} is already healthy.")
+                        break
+                    if tochoose == i and girls.currenthp < girls.hp:
+                        print(f"Healing {girls.name}")
+                        healed = round((girls.hp / 2))
+                        girls.currenthp = girls.currenthp + healed
+                        if girls.currenthp >= girls.hp:
+                            girls.currenthp = girls.hp
+                            print(f"{girls.name} is fully healed!")
+                        if girls.currenthp < girls.hp:
+                            print(f"{girls.name} recovers {healed} HP!")
+                    i = i + 1
+            else:
+                print("no.")
+        except ValueError:
+            if choice.upper() != 'C':
+                print("Enter a number please.")
 
 
 def girlcommandchoice(girltocommand):
