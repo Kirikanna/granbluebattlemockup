@@ -176,9 +176,12 @@ def checkbattlefinish(battledone):
 
 
 def displaypartystats():
+    i = 0
     print("Party Status")
     for girls in party:
-        print(girls.getstats())
+        i = i + 1
+        print(f"{i} {girls.getstats()}")
+
 
 
 def displayenemystats():
@@ -198,7 +201,7 @@ def action():
     target = 0
     while choice.upper() != "A" and choice != "C":
         try:
-            choice = input("[A] to attack with everyone, "
+            choice = input("[A] to execute all queued actions, "
                            "[C] to choose commands manually, "
                            "Input number to manually choose a target\n")
             if choice.upper() == 'A':
@@ -209,59 +212,96 @@ def action():
                 return target
             if len(enemyparty) >= int(choice) > 0:
                 totarget = int(choice) - 1
-                print(f"Targeting {enemyparty[totarget].name} this turn.")
                 target = totarget
+                print(f"Targeting {enemyparty[target].name} this turn.")
         except ValueError:
             print("Enter a valid selection please.")
 
 
 def girlauto():
     for girls in party:
-        if "KO" not in girls.status:
-            girls.command = 1
-        else:
+        print(girls.command)
+        if "KO" in girls.status and girls.command != 0:
             girls.command = 0
+        if girls.command == "":
+            girls.command = 1
     print(messagedisplay(9))
+
 
 def girlcommand():
     command = ""
-    for girls in party:
-        if "KO" not in girls.status:
-            print(girls.getstats())
-            print(f"Command for {girls.name}?")
-            if girls.currentcharge == girls.chargecap:
-                print(f"{girls.name} {messagedisplay(7)}")
-            while command != 1 and command != 2:
-                try:
-                    command = int(input("1 to attack, 2 to defend, 3 for skill list, 4 to toggle charge attack\n"))
-                    if command == 3:
-                        skilllist(girls)
-                    if command == 4:
-                        girls.togglecharge = not girls.togglecharge
-                        print(f"Charge attack set to {chargeonoroff.get(girls.togglecharge)}")
-                        print(girls.getstats())
-                except ValueError:
-                    print("Enter a number please.")
-            girls.command = command
-            command = ""
-        else:
-            girls.command = 0
-            print(f"{girls.name} is unable to act!")
+    choice = ""
+    while choice.upper() != "C":
+        try:
+            displaypartystats()
+            choice = input(f"Command who? C to go back to previous selection\n")
+            if choice.upper() == 'C':
+                displayenemystats()
+                action()
+                break
+            if len(party) >= int(choice) > 0:
+                i = 0
+                tochoose = int(choice) - 1
+                for girls in party:
+                    if "KO" in girls.status and i == tochoose:
+                        print(f"{girls.name} is unable to act!")
+                        girlcommand()
+                        break
+                    if tochoose == i:
+                        print(f"Making selection for {girls.name}")
+                        girlcommandchoice(girls)
+                    i = i + 1
+                break
+            else:
+                print("no.")
+        except ValueError:
+            print("Enter a valid selection please.")
     return 0
+
+
+def girlcommandchoice(girltocommand):
+    command = ""
+    print(girltocommand.getstats())
+    print(f"Command for {girltocommand.name}?")
+    if girltocommand.currentcharge == girltocommand.chargecap:
+        print(f"{girltocommand.name} {messagedisplay(7)}")
+    while command.upper() != 'C':
+        try:
+            command = input("1 to attack, 2 to defend, 3 for skill list, 4 to toggle charge attack\n"
+                            "C to return to previous command\n")
+            if command.upper() == 'C':
+                girlcommand()
+                break
+            if int(command) == 1 or int(command) == 2:
+                print(f"{girltocommand.name} will be {actiondisplay(int(command))}")
+                girltocommand.command = int(command)
+            if int(command) == 3:
+                if len(girltocommand.skill) > 0:
+                    skilllist(girltocommand)
+                else:
+                    print("No skills found.")
+            if int(command) == 4:
+                girltocommand.togglecharge = not girltocommand.togglecharge
+                print(f"Charge attack set to {chargeonoroff.get(girltocommand.togglecharge)}")
+                print(girltocommand.getstats())
+        except ValueError:
+            if command.upper() != 'C':
+                print("Enter a number please.")
+
 
 
 def skilllist(girls):
     command = 0
     numberofskills = len(girls.skill)
-    print(f"{girls.name}'s skills")
+    print(f"{girls.name}'s skills (any number not in skill list returns to command list")
     while command > 0 or command <= numberofskills:
         position = 0
         for skills in girls.skill:
             position = position + 1
             print(f"{position} {skills.getskillinfo()}")
         command = int(input(messagedisplay(8)))
-        if command > numberofskills:
-            print(messagedisplay(4))
+        if command > numberofskills or command <= 0:
+            print("Returning to command list.")
             break
         if girls.skill[command - 1].turnsleft > 0:
             print(
