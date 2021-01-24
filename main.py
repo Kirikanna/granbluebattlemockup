@@ -232,7 +232,6 @@ def girlauto():
 
 
 def girlcommand():
-    command = ""
     choice = ""
     while choice.upper() != "C":
         try:
