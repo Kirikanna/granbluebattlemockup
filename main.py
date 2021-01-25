@@ -141,7 +141,6 @@ def actiondisplay(display):
 
 def girlauto():
     for girls in party:
-        print(girls.command)
         if "KO" in girls.status and girls.command != 0:
             girls.command = 0
         if girls.command == "":
@@ -262,6 +261,46 @@ def girlcommandchoice(girltocommand):
                 print("Enter a number please.")
 
 
+#Update damage calc
+def singletargetdamageskill(girls):
+    command = 0
+    for enemies in enemyparty:
+        position = position + 1
+        print(f"{position} {enemies.getstats()}")
+    while command > 0 or command <= len(enemies):
+        try:
+            command = input("Who are you targeting?\n")
+            damage = damagecalc(girls, enemies)
+            damageresult(enemies, damage * girls.skill.power)
+        except ValueError:
+            print("Enter a valid selection please.")
+
+def alltargetdamageskill(girls):
+    damage = 0
+    for enemies in enemyparty:
+        position = position + 1
+        damage = damagecalc(girls, enemies)
+        damageresult(enemies, damage * girls.skill.power)
+
+def singletargethealskill(girls):
+    command = 0
+    for girls in party:
+        position = position + 1
+        print(f"{position} {girls.getstats()}")
+    while command > 0 or command <= len(enemies):
+        try:
+            command = input("Who are you healing?\n")
+            heal = damagecalc(girls, girls)
+            damageresult(girls, heal * girls.skill.power)
+        except ValueError:
+            print("Enter a valid selection please.")
+
+def alltargethealskill(girl):
+    heal = 0
+    for girls in party:
+        heal = damagecalc(girl, girls)
+        damageresult(girls, heal)
+
 
 def skilllist(girls):
     command = 0
@@ -283,6 +322,8 @@ def skilllist(girls):
         else:
             print(f"Using {girls.name}'s {girls.skill[command - 1].name}")
             girls.skill[command - 1].turnsleft = girls.skill[command - 1].turnsleft + girls.skill[command - 1].cooldown
+            #damage = damagecalc(girls, enemyparty[0]) * girls.skill[command - 1].power
+            #damageresult(enemyparty[0], damage)
 
 
 def action():
