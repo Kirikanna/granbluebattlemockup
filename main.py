@@ -1,65 +1,6 @@
 import random
-
-
-# define the Character class
-
-class Character(object):
-    def __init__(self, name, hp, attack, defense, chargecap, status, command, position):
-        self.name = name
-        self.hp = hp
-        self.currenthp = self.hp
-        self.attack = attack
-        self.defense = defense
-        self.chargecap = chargecap
-        self.currentcharge = 0
-        self.status = status
-        self.command = command
-        self.position = position
-        self.targeting = 1
-        self.chargeattackused = False
-        self.skill = []
-        self.togglecharge = True
-
-    def __bool__(self):
-        if "KO" in self.status:
-            return False
-        return True
-
-    def __str__(self):
-        return self.name
-
-    def getstats(self):
-        return f"{self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
-               f"Defense {self.defense}, Charge {self.currentcharge}/{self.chargecap}, " \
-               f"Status {self.status}, Charge attack: {chargeonoroff.get(self.togglecharge)}"
-
-
-# define the Enemy class
-class Enemy(object):
-    def __init__(self, name, hp, attack, defense, status, command, eposition, cooldown):
-        self.name = name
-        self.hp = hp
-        self.currenthp = hp
-        self.attack = attack
-        self.defense = defense
-        self.status = status
-        self.command = command
-        self.eposition = eposition
-        self.cooldown = cooldown
-        self.turnsleft = cooldown
-        self.skill = []
-
-    def __bool__(self):
-        if "KO" in self.status:
-            return False
-
-    def __str__(self):
-        return self.name
-
-    def getstats(self):
-        return f"{self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
-               f"Defense {self.defense}, Status {self.status}, Turns before using Skill: {self.turnsleft}"
-
+from Character import Character
+from Enemy import Enemy
 
 # define skills
 class Skills(object):
@@ -143,12 +84,14 @@ def battleturn(partybattle, enemybattle):
 
     chainburstcheck()
     checkifenemydead()
-
     for enemies in enemybattle:
         enemyattack(enemies)
-
+        checkifpartydefeat()
     skillrecovercooldown()
     skillrecovercooldownenemy()
+
+
+
 
     return checkbattlefinish(battle)
 
@@ -196,31 +139,6 @@ def actiondisplay(display):
     return action.get(display)
 
 
-def action():
-    choice = ""
-    target = 0
-    while choice.upper() != "A" and choice != "C":
-        try:
-            choice = input("[A] to execute all queued actions, "
-                           "[C] to choose commands manually, "
-                           "[P] to use potions, "
-                           "Input number to manually choose a target\n")
-            if choice.upper() == 'A':
-                girlauto()
-                return target
-            if choice.upper() == 'C':
-                girlcommand()
-                return target
-            if choice.upper() == 'P':
-                potionuse()
-            if len(enemyparty) >= int(choice) > 0:
-                totarget = int(choice) - 1
-                target = totarget
-                print(f"Targeting {enemyparty[target].name} this turn.")
-        except ValueError:
-            print("Enter a valid selection please.")
-
-
 def girlauto():
     for girls in party:
         print(girls.command)
@@ -259,6 +177,22 @@ def girlcommand():
         except ValueError:
             print("Enter a valid selection please.")
     return 0
+
+
+def bluepotionuse():
+    i = 0
+    for girls in party:
+        if girls.currenthp < girls.hp:
+            print(f"Healing {girls.name}")
+            healed = round((girls.hp / 2))
+            girls.currenthp = girls.currenthp + healed
+            if girls.currenthp >= girls.hp:
+                girls.currenthp = girls.hp
+                print(f"{girls.name} is fully healed!")
+            if girls.currenthp < girls.hp:
+                print(f"{girls.name} recovers {healed} HP!")
+        i = i + 1
+
 
 def potionuse():
     choice = ""
@@ -351,6 +285,38 @@ def skilllist(girls):
             girls.skill[command - 1].turnsleft = girls.skill[command - 1].turnsleft + girls.skill[command - 1].cooldown
 
 
+def action():
+    choice = ""
+    target = 0
+    while choice.upper() != "A" and choice != "C":
+        try:
+            choice = input("[A] to execute all queued actions, "
+                           "[C] to choose commands manually, "
+                           "[P] to use green potions, "
+                           "[B] to use blue potion, "
+                           "Input number to manually choose a target\n")
+            if choice.upper() == 'A':
+                girlauto()
+                return target
+            if choice.upper() == 'C':
+                girlcommand()
+                return target
+            if choice.upper() == 'P':
+                potionuse()
+            if choice.upper() == 'B':
+                bluepotionuse()
+            if len(enemyparty) >= int(choice) > 0:
+                totarget = int(choice) - 1
+                target = totarget
+                print(f"Targeting {enemyparty[target].name} this turn.")
+        except ValueError:
+            print("Enter a valid selection please.")
+
+execute = {'A': girlauto,
+           'C': girlcommand,
+           'P': potionuse}
+
+
 def skillrecovercooldown():
     i = 0
     for girls in party:
@@ -439,13 +405,11 @@ def enemyattack(enemy):
     pttarget = random.choice(party)
     while (bool(pttarget)) is False:
         pttarget = random.choice(party)
-
     pttarget = str(pttarget)
     for girls in party:
         if pttarget == girls.name:
             if enemy.turnsleft == 0:
                 print(f"{enemy.name} uses a skill!")
-                # skill effects here
                 enemy.turnsleft = enemy.turnsleft + enemy.cooldown
             else:
                 print(f"{enemy.name} attacks {girls.name}!")
@@ -453,9 +417,7 @@ def enemyattack(enemy):
                 if girls.command == 2:
                     damage = round(damage / 2)
                     print("Damage partially blocked!")
-                if damage < 0: damage = 0
                 damageresult(girls, damage)
-                checkifpartydefeat()
                 i = i + 1
 
 
@@ -465,7 +427,8 @@ def checkifpartydefeat():
             girls.status.append("KO")
             girls.currenthp = 0
             print(f"{girls.name} was knocked out.")
-    checkifwiped(girls)
+            checkifwiped(girls)
+
 
 def checkifwiped(girls):
     for girls in party:
