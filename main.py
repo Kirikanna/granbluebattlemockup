@@ -33,26 +33,33 @@ class EnemySkills(object):
 
 # characters
 # Character(name, maxhp, attack, defense, chargecap, status
-Megu = Character("Megu", 50, 5, 0, 100, [], "", 1)
-Bonk = Skills("Bop (4x multiplier)", 4, 5, [], 1, 1)
-Bonks = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
-Bonkss = Skills("Boppest' (10x multiplier)", 10, 5, [], 1, 1)
+Megu = Character("Megu", 5000, 5, 0, 100, [], "", 1)
+Bop = Skills("Bop (4x multiplier)", 4, 5, [], 1, 1)
+Boppin = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
+Boppest = Skills("Boppest' (10x multiplier)", 10, 5, [], 3, 1)
+HealAll = Skills("Heal All' (10x multiplier)", 20, 5, [], 4, 1)
 Multibonk = Skills("Multibonk' (2x multiplier)", 2, 10, [], 7, 10)
-Megu.skill.append(Bonk)
-Megu.skill.append(Bonks)
-Megu.skill.append(Bonkss)
+Megu.skill.append(Bop)
+Megu.skill.append(Boppin)
+Megu.skill.append(Boppest)
+Megu.skill.append(HealAll)
 Megu.skill.append(Multibonk)
-Tomoka = Character("Tomoka", 10, 10, 0, 100, [], "", 2)
+Tomoka = Character("Tomoka", 1000, 10, 0, 100, [], "", 2)
+
+targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
+              4: "whole party(heal)", 5: "random enemy",
+              6: "random ally", 7: "one enemy[multiple hits, carries over to other targets]"}
+
 
 # Enemy
 # Enemy(name, maxhp, attack, defense, chargecap, currentcharge
-Dummy = Enemy("Dummy", 200, 2, 1, [], "1", 1, 3)
+Dummy = Enemy("Dummy", 200, 20, 1, [], "1", 1, 3)
 LumberingStrike = EnemySkills("Lumber Strike", 20, [], 1)
 Dummy.skill.append(LumberingStrike)
-Dummy1 = Enemy("Dummy1", 30, 2, 1, [], "1", 2, 2)
+Dummy1 = Enemy("Dummy1", 30, 20, 1, [], "1", 2, 2)
 LumberingStrike2 = EnemySkills("Lumber Strikes", 20, [], 1)
 Dummy1.skill.append(LumberingStrike2)
-Dummy2 = Enemy("Dummy2", 30, 2, 1, [], "1", 3, 4)
+Dummy2 = Enemy("Dummy2", 30, 20, 1, [], "1", 3, 4)
 LumberingStrike3 = EnemySkills("Lumber Strikess", 20, [], 1)
 Dummy2.skill.append(LumberingStrike3)
 
@@ -63,9 +70,7 @@ party = premadeparty
 enemyparty = [Dummy, Dummy1, Dummy2]
 chargeonoroff = {True: "On", False: "Off"}
 
-#Placeholder for skills
-targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally", 4: "whole party", 5: "random enemy"
-    , 6: "random ally", 7: "one enemy[multiple hits, carries over to other targets]"}
+
 
 tar = 0
 
@@ -297,6 +302,8 @@ def singletargetmultihitskill(girls, skill):
                 damage = damagecalc(girls.attack * skill.power, enemyparty[command-1].defense)
                 damageresult(enemyparty[command-1], damage)
                 checkifenemydead()
+                if int(command) > len(enemyparty):
+                    command = 0
             break
         except ValueError:
             print("Enter a valid selection please.")
@@ -309,34 +316,41 @@ def alltargetdamageskill(girls, skill):
     checkifenemydead()
     checkifenemydead()
 
-def singletargethealskill(girls, skill):
+
+def singletargethealskill(girlss, skill):
     command = 0
+    position = 0
     for girls in party:
         position = position + 1
         print(f"{position} {girls.getstats()}")
-    while command > 0 or command <= len(girls):
+    while command > 0 or command <= len(party):
         try:
-            command = input("Who are you healing?\n")
-            heal = damagecalc(girls.attack, 0)
-            damageresult(girls, heal * girls.skill.power)
+            command = int(input("Who are you healing?\n"))
+            if "KO" not in party[command-1].status:
+                healresult(party[command-1], skill.power)
+                break
+            else:
+                print("Invalid target.")
         except ValueError:
             print("Enter a valid selection please.")
 
+
 def alltargethealskill(girl, skill):
-    heal = 0
     for girls in party:
-        heal = damagecalc(girl.attack, 0)
-        damageresult(girls, heal)
+        if "KO" not in girls.status:
+            healresult(girls, skill.power)
 
 skillcalc = {
     1: singletargetdamageskill,
     2: alltargetdamageskill,
-    3: alltargethealskill,
+    3: singletargethealskill,
+    4: alltargethealskill,
     7: singletargetmultihitskill,
                 }
 
 def skilllist(girls):
     command = 0
+    actualcommand = 0
     numberofskills = len(girls.skill)
     print(f"{girls.name}'s skills (any number not in skill list returns to command list")
     while command > 0 or command <= numberofskills:
@@ -345,20 +359,19 @@ def skilllist(girls):
             position = position + 1
             print(f"{position} {skills.getskillinfo()}")
         command = int(input(messagedisplay(8)))
+        actualcommand = command - 1
         if command > numberofskills or command <= 0:
             print("Returning to command list.")
             break
-        if girls.skill[command - 1].turnsleft > 0:
+        if girls.skill[actualcommand].turnsleft > 0:
             print(
-                f"{girls.name}'s {girls.skill[command - 1].name} is on cooldown for {girls.skill[command - 1].turnsleft}"
+                f"{girls.name}'s {girls.skill[actualcommand].name} is on cooldown for "
+                f"{girls.skill[actualcommand].turnsleft}"
                 f" turns.")
         else:
-            print(f"Using {girls.name}'s {girls.skill[command - 1].name}")
-            skillcalc[girls.skill[command - 1].targets](girls, girls.skill[command-1])
-            girls.skill[command - 1].turnsleft = girls.skill[command - 1].turnsleft + girls.skill[command - 1].cooldown
-            #damage = damagecalc(girls, enemyparty[0]) * girls.skill[command - 1].power
-            #damageresult(enemyparty[0], damage)
-
+            print(f"Using {girls.name}'s {girls.skill[actualcommand].name}")
+            skillcalc[girls.skill[command - 1].targets](girls, girls.skill[actualcommand])
+            girls.skill[actualcommand].turnsleft = girls.skill[actualcommand].turnsleft + girls.skill[actualcommand].cooldown
 
 def action():
     choice = ""
@@ -387,6 +400,7 @@ def action():
         except ValueError:
             print("Enter a valid selection please.")
 
+
 execute = {'A': girlauto,
            'C': girlcommand,
            'P': potionuse}
@@ -406,12 +420,15 @@ def skillrecovercooldownenemy():
         if enemy.turnsleft > 0:
             enemy.turnsleft = enemy.turnsleft - 1
 
+
 def setchargebarzero(girls):
-     girls.currentcharge = 0
+    girls.currentcharge = 0
+
 
 def damagecalc(attack, defend):
     result = attack - defend
     return result
+
 
 def damageresult(defender, finaldamage):
     if finaldamage <= 0:
@@ -419,6 +436,19 @@ def damageresult(defender, finaldamage):
     else:
         defender.currenthp = defender.currenthp - finaldamage
         print(f"{defender.name} takes {finaldamage} damage!")
+
+
+def healresult(healed, healamount):
+    if healamount <= 0:
+        print(f"{healed.name} does not take any damage.")
+    else:
+        healed.currenthp = healed.currenthp + healamount
+        if healed.currenthp >= healed.hp:
+            healed.currenthp = healed.hp
+            print(f"{healed.name} is fully healed!")
+        else:
+            print(f"{healed.name} recovers {healamount} HP!")
+
 
 def chargegain(gainer, chargeamount):
     gainer.currentcharge = gainer.currentcharge + chargeamount
@@ -429,7 +459,6 @@ def girlattack(girls, partystarget):
     for target in enemyparty:
         if girls.command == 1 and partystarget == targetposition:
             if girls.currentcharge == girls.chargecap and girls.togglecharge is True:
-                #Sets flag for chain burst
                 girls.chargeattackused = True
                 print(f"{girls.name} uses a charge attack!")
                 setchargebarzero(girls)
@@ -442,7 +471,6 @@ def girlattack(girls, partystarget):
             damageresult(target, damage)
             checkifenemydead()
         targetposition = targetposition + 1
-
 
 
 def checkifenemydead():
@@ -485,6 +513,7 @@ def enemyattack(enemy):
         if pttarget == girls.name:
             if enemy.turnsleft == 0:
                 print(f"{enemy.name} uses a skill!")
+                print(f"{enemy.skill[0].name}")
                 enemy.turnsleft = enemy.turnsleft + enemy.cooldown
             else:
                 print(f"{enemy.name} attacks {girls.name}!")
