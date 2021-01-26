@@ -33,9 +33,9 @@ class EnemySkills(object):
 # characters
 # Character(name, maxhp, attack, defense, chargecap, status
 Megu = Character("Megu", 50, 5, 0, 100, [], "", 1)
-Bonk = Skills("Bonk", 20, 5, [], 1)
-Bonks = Skills("Bonks", 20, 5, [], 2)
-Bonkss = Skills("Bonkss", 20, 5, [], 1)
+Bonk = Skills("Bop (4x multiplier)", 4, 5, [], 1)
+Bonks = Skills("Boppin' (5x multiplier)", 5, 5, [], 2)
+Bonkss = Skills("Boppest' (10x multiplier)", 10, 5, [], 1)
 Megu.skill.append(Bonk)
 Megu.skill.append(Bonks)
 Megu.skill.append(Bonkss)
@@ -262,45 +262,54 @@ def girlcommandchoice(girltocommand):
 
 
 #Update damage calc
-def singletargetdamageskill(girls):
+def singletargetdamageskill(girls, skill):
     command = 0
+    position = 0
     for enemies in enemyparty:
         position = position + 1
         print(f"{position} {enemies.getstats()}")
-    while command > 0 or command <= len(enemies):
+    while int(command) > 0 or int(command) <= len(enemyparty):
         try:
-            command = input("Who are you targeting?\n")
-            damage = damagecalc(girls, enemies)
-            damageresult(enemies, damage * girls.skill.power)
+            command = int(input("Who are you targeting?\n"))
+            damage = damagecalc(girls.attack * skill.power, enemyparty[command-1].defense)
+            damageresult(enemyparty[command-1], damage)
+            checkifenemydead()
+            break
         except ValueError:
             print("Enter a valid selection please.")
 
-def alltargetdamageskill(girls):
+def alltargetdamageskill(girls, skill):
     damage = 0
     for enemies in enemyparty:
-        position = position + 1
-        damage = damagecalc(girls, enemies)
-        damageresult(enemies, damage * girls.skill.power)
+        damage = damagecalc(girls.attack * skill.power, enemies.defense)
+        damageresult(enemies, damage)
+    checkifenemydead()
+    checkifenemydead()
 
-def singletargethealskill(girls):
+def singletargethealskill(girls, skill):
     command = 0
     for girls in party:
         position = position + 1
         print(f"{position} {girls.getstats()}")
-    while command > 0 or command <= len(enemies):
+    while command > 0 or command <= len(girls):
         try:
             command = input("Who are you healing?\n")
-            heal = damagecalc(girls, girls)
+            heal = damagecalc(girls.attack, 0)
             damageresult(girls, heal * girls.skill.power)
         except ValueError:
             print("Enter a valid selection please.")
 
-def alltargethealskill(girl):
+def alltargethealskill(girl, skill):
     heal = 0
     for girls in party:
-        heal = damagecalc(girl, girls)
+        heal = damagecalc(girl.attack, 0)
         damageresult(girls, heal)
 
+skillcalc = {
+    1: singletargetdamageskill,
+    2: alltargetdamageskill,
+    3: alltargethealskill,
+                }
 
 def skilllist(girls):
     command = 0
@@ -321,6 +330,7 @@ def skilllist(girls):
                 f" turns.")
         else:
             print(f"Using {girls.name}'s {girls.skill[command - 1].name}")
+            skillcalc[girls.skill[command - 1].targets](girls, girls.skill[command-1])
             girls.skill[command - 1].turnsleft = girls.skill[command - 1].turnsleft + girls.skill[command - 1].cooldown
             #damage = damagecalc(girls, enemyparty[0]) * girls.skill[command - 1].power
             #damageresult(enemyparty[0], damage)
@@ -375,8 +385,8 @@ def skillrecovercooldownenemy():
 def setchargebarzero(girls):
      girls.currentcharge = 0
 
-def damagecalc(attacker, defender):
-    result = attacker.attack - defender.defense
+def damagecalc(attack, defend):
+    result = attack - defend
     return result
 
 def damageresult(defender, finaldamage):
@@ -404,7 +414,7 @@ def girlattack(girls, partystarget):
                 print(f"{girls.name} attacks {target.name}!")
                 chargegain(girls, 20)
                 if girls.currentcharge > girls.chargecap: girls.currentcharge = girls.chargecap
-                damage = damagecalc(girls, target)
+                damage = damagecalc(girls.attack, target.defense)
             damageresult(target, damage)
             checkifenemydead()
         targetposition = targetposition + 1
@@ -454,7 +464,7 @@ def enemyattack(enemy):
                 enemy.turnsleft = enemy.turnsleft + enemy.cooldown
             else:
                 print(f"{enemy.name} attacks {girls.name}!")
-                damage = damagecalc(enemy, girls)
+                damage = damagecalc(enemy.attack, girls.defense)
                 if girls.command == 2:
                     damage = round(damage / 2)
                     print("Damage partially blocked!")
