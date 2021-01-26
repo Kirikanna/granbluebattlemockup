@@ -27,24 +27,39 @@ class EnemySkills(object):
         self.effects = effects
         self.targets = targets
 
+class Status(object):
+    def __init__(self, name):
+        self.name = name
+        self.effects = {}
+        self.attackmodtier = \
+            {"Rage" : 1.2,
+            "Rage2" : 1.4,
+            "Weakened" : 0.5}
+
+
 
 # battle variables
 
-
 # characters
 # Character(name, maxhp, attack, defense, chargecap, status
-Megu = Character("Megu", 5000, 5, 0, 100, [], "", 1)
+Megu = Character("Megu", 5000, 15, 0, 100, [], "", 1)
 Bop = Skills("Bop (4x multiplier)", 4, 5, [], 1, 1)
 Boppin = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
 Boppest = Skills("Boppest' (10x multiplier)", 10, 5, [], 3, 1)
 HealAll = Skills("Heal All' (10x multiplier)", 20, 5, [], 4, 1)
 Multibonk = Skills("Multibonk' (2x multiplier)", 2, 10, [], 7, 10)
+#Rage = Status("Rage")
+#KnockOut = Status("KO")
 Megu.skill.append(Bop)
 Megu.skill.append(Boppin)
 Megu.skill.append(Boppest)
 Megu.skill.append(HealAll)
 Megu.skill.append(Multibonk)
-Tomoka = Character("Tomoka", 1000, 10, 0, 100, [], "", 2)
+Tomoka = Character("Tomoka", 1000, 20, 0, 100, [], "", 2)
+
+Tomoka.status.append("Poison")
+Tomoka.status.append("Rage")
+#Tomoka.status.append(Rage)
 
 targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
               4: "whole party(heal)", 5: "random enemy",
@@ -53,7 +68,7 @@ targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
 
 # Enemy
 # Enemy(name, maxhp, attack, defense, chargecap, currentcharge
-Dummy = Enemy("Dummy", 200, 20, 1, [], "1", 1, 3)
+Dummy = Enemy("Dummy", 200, 20, 20, [], "1", 1, 3)
 LumberingStrike = EnemySkills("Lumber Strike", 20, [], 1)
 Dummy.skill.append(LumberingStrike)
 Dummy1 = Enemy("Dummy1", 30, 20, 1, [], "1", 2, 2)
@@ -63,6 +78,9 @@ Dummy2 = Enemy("Dummy2", 30, 20, 1, [], "1", 3, 4)
 LumberingStrike3 = EnemySkills("Lumber Strikess", 20, [], 1)
 Dummy2.skill.append(LumberingStrike3)
 
+Dummy2.status.append("Poison")
+Dummy.status.append("Defense Break")
+Dummy1.status.append("Defense Break")
 battle = False
 
 premadeparty = [Megu, Tomoka]
@@ -98,8 +116,7 @@ def battleturn(partybattle, enemybattle):
     skillrecovercooldown()
     skillrecovercooldownenemy()
 
-
-
+    procendofturnstatus()
 
     return checkbattlefinish(battle)
 
@@ -145,6 +162,10 @@ def displayenemystats():
 def actiondisplay(display):
     action = {0: "doing nothing", 1: "attacking", 2: "defending", 3: "skill", 4: "execute action"}
     return action.get(display)
+
+def resultdisplay(display):
+    result = {"Poison": "from poison"}
+    return result
 
 
 def girlauto():
@@ -340,6 +361,40 @@ def alltargethealskill(girl, skill):
         if "KO" not in girls.status:
             healresult(girls, skill.power)
 
+def attackmods(attacker):
+    damagemultiplier = 1
+    for i in attacker.status:
+        if attackmodtier.get(i) is not None:
+            damagemultiplier = damagemultiplier * attackmodtier.get(i)
+    return damagemultiplier
+
+attackmodtier = {"Rage" : 1.2,
+                 "Rage2" : 1.4,
+                 "Weakened" : 0.5}
+
+def defensemods(defender):
+    defensemultiplier = 1
+    for i in defender.status:
+        if defensemodtier.get(i) is not None:
+            defensemultiplier = defensemultiplier * defensemodtier.get(i)
+    return defensemultiplier
+
+defensemodtier = {"Defense Down" : 0.8,
+                  "Defense Break" : 0.7,
+                  "Bulky" : 1.5}
+
+def procendofturnstatus():
+    for girls in party:
+        if "Poison" in girls.status:
+            print(f"{girls.name} suffers from Poison!")
+            damageresult(girls, 5)
+    for enemys in enemyparty:
+        if "Poison" in enemys.status:
+            print(f"{enemys.name} suffers from Poison!")
+            damageresult(enemys, 5)
+
+
+
 skillcalc = {
     1: singletargetdamageskill,
     2: alltargetdamageskill,
@@ -467,7 +522,7 @@ def girlattack(girls, partystarget):
                 print(f"{girls.name} attacks {target.name}!")
                 chargegain(girls, 20)
                 if girls.currentcharge > girls.chargecap: girls.currentcharge = girls.chargecap
-                damage = damagecalc(girls.attack, target.defense)
+                damage = damagecalc(round(girls.attack*attackmods(girls)), round(target.defense*defensemods(target)))
             damageresult(target, damage)
             checkifenemydead()
         targetposition = targetposition + 1
@@ -517,7 +572,7 @@ def enemyattack(enemy):
                 enemy.turnsleft = enemy.turnsleft + enemy.cooldown
             else:
                 print(f"{enemy.name} attacks {girls.name}!")
-                damage = damagecalc(enemy.attack, girls.defense)
+                damage = damagecalc(round(enemy.attack*attackmods(enemy)), round(girls.defense*defensemods(girls)))
                 if girls.command == 2:
                     damage = round(damage / 2)
                     print("Damage partially blocked!")
