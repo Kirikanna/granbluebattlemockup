@@ -4,13 +4,14 @@ from Enemy import Enemy
 
 # define skills
 class Skills(object):
-    def __init__(self, name, power, cooldown, effects, targets):
+    def __init__(self, name, power, cooldown, effects, targets, numberofhits):
         self.name = name
         self.power = power
         self.cooldown = cooldown
         self.turnsleft = 0
         self.effects = effects
         self.targets = targets
+        self.numberofhits = numberofhits
 
     def getskillinfo(self):
         return f"{self.name} | Power {self.power} | Cooldown {self.turnsleft} " \
@@ -33,12 +34,14 @@ class EnemySkills(object):
 # characters
 # Character(name, maxhp, attack, defense, chargecap, status
 Megu = Character("Megu", 50, 5, 0, 100, [], "", 1)
-Bonk = Skills("Bop (4x multiplier)", 4, 5, [], 1)
-Bonks = Skills("Boppin' (5x multiplier)", 5, 5, [], 2)
-Bonkss = Skills("Boppest' (10x multiplier)", 10, 5, [], 1)
+Bonk = Skills("Bop (4x multiplier)", 4, 5, [], 1, 1)
+Bonks = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
+Bonkss = Skills("Boppest' (10x multiplier)", 10, 5, [], 1, 1)
+Multibonk = Skills("Multibonk' (2x multiplier)", 2, 10, [], 7, 10)
 Megu.skill.append(Bonk)
 Megu.skill.append(Bonks)
 Megu.skill.append(Bonkss)
+Megu.skill.append(Multibonk)
 Tomoka = Character("Tomoka", 10, 10, 0, 100, [], "", 2)
 
 # Enemy
@@ -62,7 +65,7 @@ chargeonoroff = {True: "On", False: "Off"}
 
 #Placeholder for skills
 targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally", 4: "whole party", 5: "random enemy"
-    , 6: "random ally"}
+    , 6: "random ally", 7: "one enemy[multiple hits, carries over to other targets]"}
 
 tar = 0
 
@@ -278,6 +281,26 @@ def singletargetdamageskill(girls, skill):
         except ValueError:
             print("Enter a valid selection please.")
 
+
+def singletargetmultihitskill(girls, skill):
+    command = 0
+    position = 0
+    hits = 0
+    for enemies in enemyparty:
+        position = position + 1
+        print(f"{position} {enemies.getstats()}")
+    while int(command) > 0 or int(command) <= len(enemyparty):
+        try:
+            command = int(input("Who are you targeting?\n"))
+            for hits in range(skill.numberofhits):
+                hits = hits + 1
+                damage = damagecalc(girls.attack * skill.power, enemyparty[command-1].defense)
+                damageresult(enemyparty[command-1], damage)
+                checkifenemydead()
+            break
+        except ValueError:
+            print("Enter a valid selection please.")
+
 def alltargetdamageskill(girls, skill):
     damage = 0
     for enemies in enemyparty:
@@ -309,6 +332,7 @@ skillcalc = {
     1: singletargetdamageskill,
     2: alltargetdamageskill,
     3: alltargethealskill,
+    7: singletargetmultihitskill,
                 }
 
 def skilllist(girls):
