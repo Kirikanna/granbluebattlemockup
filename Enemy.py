@@ -15,13 +15,19 @@ class Enemy(object):
         self.turnsleft = cooldown
         self.skill = []
 
-    def __bool__(self):
-        if "KO" in self.status:
-            return False
 
     def __str__(self):
         return self.name
 
+
     def getstats(self):
         return f"{self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
-               f"Defense {self.defense}, Status {self.status}, Turns before using Skill: {self.turnsleft}"
+               f"Defense {self.defense}, Status {self.getstatus(self.status)}, Turns before using Skill: {self.turnsleft}"
+
+
+    def getstatus(self, status):
+        statusdisplay = []
+        for whatstat in status:
+            statusdisplay.append(whatstat.name)
+        return statusdisplay
+

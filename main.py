@@ -2,6 +2,8 @@ import random
 from Character import Character
 from Enemy import Enemy
 
+
+
 # define skills
 class Skills(object):
     def __init__(self, name, power, cooldown, effects, targets, numberofhits):
@@ -16,8 +18,7 @@ class Skills(object):
     def getskillinfo(self):
         return f"{self.name} | Power {self.power} | Cooldown {self.turnsleft} " \
                f" | Effects {self.effects}" \
-               f"| Targets: {targettype[self.targets]}"
-
+               f"| Targets: {targettype.get(self.targets)}"
 
 # define skills
 class EnemySkills(object):
@@ -27,47 +28,46 @@ class EnemySkills(object):
         self.effects = effects
         self.targets = targets
 
-class Status(object):
-    def __init__(self, name):
-        self.name = name
-        self.effects = {}
-        self.attackmodtier = \
-            {"Rage" : 1.2,
-            "Rage2" : 1.4,
-            "Weakened" : 0.5}
 
+class Status(object):
+    def __init__(self, name, power, type, turnsleft):
+        self.name = name
+        self.power = power
+        self.type = type
+        self.turnsleft = turnsleft
 
 
 # battle variables
 
 # characters
-# Character(name, maxhp, attack, defense, chargecap, status
-Megu = Character("Megu", 5000, 15, 0, 100, [], "", 1)
+# Character(name, maxhp, attack, defense, chargecap
+Megu = Character("Megu", 5000, 15, 0, 100)
 Bop = Skills("Bop (4x multiplier)", 4, 5, [], 1, 1)
 Boppin = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
 Boppest = Skills("Boppest' (10x multiplier)", 10, 5, [], 3, 1)
 HealAll = Skills("Heal All' (10x multiplier)", 20, 5, [], 4, 1)
 Multibonk = Skills("Multibonk' (2x multiplier)", 2, 10, [], 7, 10)
-#Rage = Status("Rage")
-#KnockOut = Status("KO")
+Knockout = Status("KO", 0, 0, 0)
 Megu.skill.append(Bop)
 Megu.skill.append(Boppin)
 Megu.skill.append(Boppest)
 Megu.skill.append(HealAll)
 Megu.skill.append(Multibonk)
-Tomoka = Character("Tomoka", 1000, 20, 0, 100, [], "", 2)
+Tomoka = Character("Tomoka", 1000, 20, 0, 100)
 
-
-Tomoka.status.append("Poison")
-Tomoka.status.append("Rage")
-#Tomoka.status.append(Rage)
-
+Rage = Status("Rage", 1.2, 1, 4)
+Tomoka.status.append(Rage)
+Poison = Status("Poison", 5, 3, 4)
+Tomoka.status.append(Poison)
 
 
 targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
               4: "whole party(heal)", 5: "random enemy",
               6: "random ally", 7: "one enemy[multiple hits, carries over to other targets]"}
 
+# Skills name, power, cooldown, effects, targets, numberofhits):
+MiserableMist = Skills("Miserable Mist", 0, 5, [1, 2], 1, 1)
+Tomoka.skill.append(MiserableMist)
 
 # Enemy
 # Enemy(name, maxhp, attack, defense, chargecap, currentcharge
@@ -77,16 +77,20 @@ Dummy.skill.append(LumberingStrike)
 Dummy1 = Enemy("Dummy1", 30, 20, 1, [], "1", 2, 2)
 LumberingStrike2 = EnemySkills("Lumber Strikes", 100, [], 1)
 Dummy2 = Enemy("Dummy2", 30, 20, 1, [], "1", 3, 4)
-LumberingStrike3 = EnemySkills("Lumber Strikess", 50, [], 1)
+LumberingStrike3 = EnemySkills("Lumbering Mist", 50, [1, 2], 1)
+#EnemySkills
+#   EnemySKill(self, name, power, effects, targets)
 Dummy1.skill.append(LumberingStrike)
 Dummy1.skill.append(LumberingStrike2)
 Dummy1.skill.append(LumberingStrike3)
 Dummy2.skill.append(LumberingStrike3)
 
-Dummy2.status.append("Poison")
-Dummy.status.append("Defense Break")
-Dummy.status.append("Rage")
-Dummy1.status.append("Defense Break")
+#Dummy2.status.append("Poison")
+DefenseBreak = Status("Defense Break", 0.8, 2, 5)
+DefenseBreak2 = Status("Defense Breaker", 0.5, 2, 5)
+AttackBreak = Status("Attack Break", 0.9, 1, 4)
+Dummy.status.append(DefenseBreak)
+
 battle = False
 
 premadeparty = [Megu, Tomoka]
@@ -156,6 +160,14 @@ def displaypartystats():
         i = i + 1
         print(f"{i} {girls.getstats()}")
 
+def inflictstatus(skill, target):
+    for status in skill.effects:
+        if status == 1 and DefenseBreak not in target.status:
+            target.status.append(DefenseBreak)
+            print(f"Inflicted {target.name} with {DefenseBreak.name}")
+        if status == 2 and AttackBreak not in target.status:
+            target.status.append(AttackBreak)
+            print(f"Inflicted {target.name} with {AttackBreak.name}")
 
 
 def displayenemystats():
@@ -169,14 +181,10 @@ def actiondisplay(display):
     action = {0: "doing nothing", 1: "attacking", 2: "defending", 3: "skill", 4: "execute action"}
     return action.get(display)
 
-def resultdisplay(display):
-    result = {"Poison": "from poison"}
-    return result
-
 
 def girlauto():
     for girls in party:
-        if "KO" in girls.status and girls.command != 0:
+        if Knockout in girls.status and girls.command != 0:
             girls.command = 0
         if girls.command == "":
             girls.command = 1
@@ -197,7 +205,7 @@ def girlcommand():
                 i = 0
                 tochoose = int(choice) - 1
                 for girls in party:
-                    if "KO" in girls.status and i == tochoose:
+                    if Knockout in girls.status and i == tochoose:
                         print(f"{girls.name} is unable to act!")
                         girlcommand()
                         break
@@ -242,7 +250,7 @@ def potionuse():
                 i = 0
                 tochoose = int(choice) - 1
                 for girls in party:
-                    if "KO" in girls.status and i == tochoose:
+                    if Knockout in girls.status and i == tochoose:
                         print(f"{girls.name} is knocked out, cannot heal!")
                         potionuse()
                         break
@@ -308,6 +316,7 @@ def singletargetdamageskill(girls, skill):
             command = int(input("Who are you targeting?\n"))
             damage = damagecalc(girls.attack * skill.power, enemyparty[command-1].defense)
             damageresult(enemyparty[command-1], damage)
+            inflictstatus(skill, enemyparty[command-1])
             checkifenemydead()
             break
         except ValueError:
@@ -340,6 +349,7 @@ def alltargetdamageskill(girls, skill):
     for enemies in enemyparty:
         damage = damagecalc(girls.attack * skill.power, enemies.defense)
         damageresult(enemies, damage)
+        inflictstatus(skill, enemies)
     checkifenemydead()
     checkifenemydead()
 
@@ -353,7 +363,7 @@ def singletargethealskill(girlss, skill):
     while command > 0 or command <= len(party):
         try:
             command = int(input("Who are you healing?\n"))
-            if "KO" not in party[command-1].status:
+            if Knockout not in party[command-1].status:
                 healresult(party[command-1], skill.power)
                 break
             else:
@@ -364,40 +374,36 @@ def singletargethealskill(girlss, skill):
 
 def alltargethealskill(girl, skill):
     for girls in party:
-        if "KO" not in girls.status:
+        if Knockout not in girls.status:
             healresult(girls, skill.power)
 
 def attackmods(attacker):
     damagemultiplier = 1
-    for i in attacker.status:
-        if attackmodtier.get(i) is not None:
-            damagemultiplier = damagemultiplier * attackmodtier.get(i)
+    for mods in attacker.status:
+        if mods.type == 1:
+            damagemultiplier = damagemultiplier * mods.power
     return damagemultiplier
-
-attackmodtier = {"Rage" : 1.2,
-                 "Rage2" : 1.4,
-                 "Weakened" : 0.5}
 
 def defensemods(defender):
     defensemultiplier = 1
-    for i in defender.status:
-        if defensemodtier.get(i) is not None:
-            defensemultiplier = defensemultiplier * defensemodtier.get(i)
+    for mods in defender.status:
+        if mods.type == 2:
+            defensemultiplier = defensemultiplier * mods.power
     return defensemultiplier
 
-defensemodtier = {"Defense Down" : 0.8,
-                  "Defense Break" : 0.7,
-                  "Bulky" : 1.5}
 
 def procendofturnstatus():
     for girls in party:
-        if "Poison" in girls.status:
-            print(f"{girls.name} suffers from Poison!")
-            damageresult(girls, 5)
+        for effects in girls.status:
+            if effects.type == 3:
+                print(f"{girls.name} suffers from {effects.name}!")
+                damageresult(girls, effects.power)
     for enemys in enemyparty:
-        if "Poison" in enemys.status:
-            print(f"{enemys.name} suffers from Poison!")
-            damageresult(enemys, 5)
+        for effects in enemys.status:
+            if effects.type == 3:
+                print(f"{enemys.name} suffers from {effects.name}!")
+                damageresult(enemys, effects.power)
+                damageresult(enemys, effects.power)
 
 
 
@@ -418,6 +424,7 @@ def singletargetdamageskillenemy(attacker, skill):
         damage = round(damage / 2)
         print("Damage partially blocked!")
     damageresult(pttarget, damage)
+    inflictstatus(skill, pttarget)
     checkifpartydefeat()
     checkifpartydefeat()
 
@@ -426,15 +433,16 @@ def alltargetdamageskillenemy(attacker, skill):
     for girls in party:
         damage = damagecalc(round(attacker.attack * skill.power * attackmods(attacker)),
                             round(girls.defense * defensemods(girls)))
-        if "KO" not in girls.status:
+        if Knockout not in girls.status:
             damageresult(girls, damage)
+            inflictstatus(skill, girls)
     checkifpartydefeat()
     checkifpartydefeat()
 
 
 def executeenemyskill(attacker):
     skillpick = random.choice(attacker.skill)
-    print(f"{attacker.name} is using {skillpick.name}, a {targettype[skillpick.targets]}!")
+    print(f"{attacker.name} is using {skillpick.name}!")
     enemyskillcalc[skillpick.targets](attacker, skillpick)
 
 
@@ -457,18 +465,19 @@ def skilllist(girls):
             print(f"{position} {skills.getskillinfo()}")
         command = int(input(messagedisplay(8)))
         actualcommand = command - 1
+        girlskilltouse = girls.skill[actualcommand]
         if command > numberofskills or command <= 0:
             print("Returning to command list.")
             break
-        if girls.skill[actualcommand].turnsleft > 0:
+        if girlskilltouse.turnsleft > 0:
             print(
-                f"{girls.name}'s {girls.skill[actualcommand].name} is on cooldown for "
-                f"{girls.skill[actualcommand].turnsleft}"
+                f"{girls.name}'s {girlskilltouse.name} is on cooldown for "
+                f"{girlskilltouse.turnsleft}"
                 f" turns.")
         else:
-            print(f"Using {girls.name}'s {girls.skill[actualcommand].name}")
-            skillcalc[girls.skill[command - 1].targets](girls, girls.skill[actualcommand])
-            girls.skill[actualcommand].turnsleft = girls.skill[actualcommand].turnsleft + girls.skill[actualcommand].cooldown
+            print(f"Using {girls.name}'s {girlskilltouse.name}")
+            skillcalc[girlskilltouse.targets](girls, girlskilltouse)
+            girlskilltouse.turnsleft = girlskilltouse.turnsleft + girlskilltouse.cooldown
 
 def action():
     choice = ""
@@ -507,8 +516,8 @@ def skillrecovercooldown():
     i = 0
     for girls in party:
         for skills in girls.skill:
-            if girls.skill[i].turnsleft > 0:
-                girls.skill[i].turnsleft = girls.skill[i].turnsleft - 1
+            if skills.turnsleft > 0:
+                skills.turnsleft = skills.turnsleft - 1
             i = i + 1
 
 
@@ -573,10 +582,10 @@ def girlattack(girls, partystarget):
 def checkifenemydead():
     for enemy in enemyparty:
         if enemy.currenthp <= 0:
-            enemy.status.append("KO")
-        while "KO" in enemy.status:
+            enemy.status.append(Knockout)
+        while Knockout in enemy.status:
             for enemy in enemyparty:
-                if "KO" in enemy.status:
+                if Knockout in enemy.status:
                     print(f"{enemy.name} has been defeated.")
                     enemyparty.remove(enemy)
                 if not enemyparty:
@@ -612,7 +621,7 @@ def enemyattack(enemy):
 
 
 def checkifvalidenemytarget(pttarget):
-    while "KO" in pttarget.status:
+    while Knockout in pttarget.status:
         pttarget = random.choice(party)
     return pttarget
 
@@ -627,9 +636,9 @@ def enemyexecute(enemy, pttarget):
 
 def checkifpartydefeat():
     for girls in party:
-        if girls.currenthp <= 0 and "KO" not in girls.status:
+        if girls.currenthp <= 0 and Knockout not in girls.status:
             girls.status.clear()
-            girls.status.append("KO")
+            girls.status.append(Knockout)
             girls.currenthp = 0
             print(f"{girls.name} was knocked out.")
             checkifwiped(girls)
@@ -637,7 +646,7 @@ def checkifpartydefeat():
 
 def checkifwiped(girls):
     for girls in party:
-        if "KO" not in girls.status:
+        if Knockout not in girls.status:
             checkbattlefinish(False)
     print(messagedisplay(6))
     checkbattlefinish(True)

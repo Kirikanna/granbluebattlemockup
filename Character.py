@@ -1,7 +1,7 @@
 # define the Character class
 
 class Character(object):
-    def __init__(self, name, hp, attack, defense, chargecap, status, command, position):
+    def __init__(self, name, hp, attack, defense, chargecap):
         self.name = name
         self.hp = hp
         self.currenthp = self.hp
@@ -9,9 +9,10 @@ class Character(object):
         self.defense = defense
         self.chargecap = chargecap
         self.currentcharge = 0
-        self.status = status
-        self.command = command
-        self.position = position
+        self.status = []
+        self.statusdisplay = []
+        self.command = ""
+        self.position = 0
         self.targeting = 1
         self.chargeattackused = False
         self.skill = []
@@ -26,7 +27,17 @@ class Character(object):
     def __str__(self):
         return self.name
 
+
+
     def getstats(self):
         return f"{self.name}: HP {self.currenthp}/{self.hp}, Attack {self.attack} " \
                f"Defense {self.defense}, Charge {self.currentcharge}/{self.chargecap}, " \
-               f"Status {self.status}, Charge attack: {self.chargeonoroff.get(self.togglecharge)}"
+               f"Status {self.getstatus(self.status)}, Charge attack: {self.chargeonoroff.get(self.togglecharge)}"
+
+    def getstatus(self, status):
+        statusdisplay = []
+        for whatstat in status:
+            statusdisplay.append(whatstat.name)
+        return statusdisplay
+
+
