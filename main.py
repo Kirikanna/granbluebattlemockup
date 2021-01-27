@@ -48,7 +48,7 @@ Boppin = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
 Boppest = Skills("Boppest' (10x multiplier)", 10, 5, [], 3, 1)
 HealAll = Skills("Heal All' (10x multiplier)", 20, 5, [], 4, 1)
 Multibonk = Skills("Multibonk' (2x multiplier)", 2, 10, [], 7, 10)
-Rage = Status("Rage")
+#Rage = Status("Rage")
 #KnockOut = Status("KO")
 Megu.skill.append(Bop)
 Megu.skill.append(Boppin)
@@ -57,9 +57,12 @@ Megu.skill.append(HealAll)
 Megu.skill.append(Multibonk)
 Tomoka = Character("Tomoka", 1000, 20, 0, 100, [], "", 2)
 
+
 Tomoka.status.append("Poison")
 Tomoka.status.append("Rage")
-Tomoka.status.append(Rage)
+#Tomoka.status.append(Rage)
+
+
 
 targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
               4: "whole party(heal)", 5: "random enemy",
@@ -69,12 +72,12 @@ targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
 # Enemy
 # Enemy(name, maxhp, attack, defense, chargecap, currentcharge
 Dummy = Enemy("Dummy", 200, 20, 20, [], "1", 1, 3)
-LumberingStrike = EnemySkills("Lumber Strike", 20, [], 1)
+LumberingStrike = EnemySkills("Lumber Strike", 50, [], 2)
 Dummy.skill.append(LumberingStrike)
 Dummy1 = Enemy("Dummy1", 30, 20, 1, [], "1", 2, 2)
-LumberingStrike2 = EnemySkills("Lumber Strikes", 20, [], 1)
+LumberingStrike2 = EnemySkills("Lumber Strikes", 100, [], 1)
 Dummy2 = Enemy("Dummy2", 30, 20, 1, [], "1", 3, 4)
-LumberingStrike3 = EnemySkills("Lumber Strikess", 20, [], 1)
+LumberingStrike3 = EnemySkills("Lumber Strikess", 50, [], 1)
 Dummy1.skill.append(LumberingStrike)
 Dummy1.skill.append(LumberingStrike2)
 Dummy1.skill.append(LumberingStrike3)
@@ -82,6 +85,7 @@ Dummy2.skill.append(LumberingStrike3)
 
 Dummy2.status.append("Poison")
 Dummy.status.append("Defense Break")
+Dummy.status.append("Rage")
 Dummy1.status.append("Defense Break")
 battle = False
 
@@ -405,9 +409,40 @@ skillcalc = {
     7: singletargetmultihitskill,
                 }
 
+def singletargetdamageskillenemy(attacker, skill):
+    pttarget = checkifvalidenemytarget(random.choice(party))
+    print(f"{attacker.name} targets {pttarget.name}!")
+    damage = damagecalc(round(attacker.attack * skill.power * attackmods(attacker)),
+                        round(pttarget.defense * defensemods(pttarget)))
+    if pttarget.command == 2:
+        damage = round(damage / 2)
+        print("Damage partially blocked!")
+    damageresult(pttarget, damage)
+    checkifpartydefeat()
+    checkifpartydefeat()
+
+
+def alltargetdamageskillenemy(attacker, skill):
+    for girls in party:
+        damage = damagecalc(round(attacker.attack * skill.power * attackmods(attacker)),
+                            round(girls.defense * defensemods(girls)))
+        if "KO" not in girls.status:
+            damageresult(girls, damage)
+    checkifpartydefeat()
+    checkifpartydefeat()
+
+
 def executeenemyskill(attacker):
     skillpick = random.choice(attacker.skill)
-    print(skillpick.name)
+    print(f"{attacker.name} is using {skillpick.name}, a {targettype[skillpick.targets]}!")
+    enemyskillcalc[skillpick.targets](attacker, skillpick)
+
+
+enemyskillcalc = {
+    1: singletargetdamageskillenemy,
+    2: alltargetdamageskillenemy
+                }
+
 
 
 def skilllist(girls):
@@ -566,25 +601,34 @@ def chainburstcheck():
 
 
 def enemyattack(enemy):
-    i = 0
     if enemy.turnsleft == 0:
         print(f"{enemy.name} uses a skill!")
         executeenemyskill(enemy)
         enemy.turnsleft = enemy.turnsleft + enemy.cooldown
     else:
-        pttarget = random.choice(party)
+        pttarget = checkifvalidenemytarget(random.choice(party))
         print(f"{enemy.name} attacks {pttarget.name}!")
-        damage = damagecalc(round(enemy.attack * attackmods(enemy)), round(pttarget.defense * defensemods(pttarget)))
-        if pttarget.command == 2:
-            damage = round(damage / 2)
-            print("Damage partially blocked!")
-        damageresult(pttarget, damage)
-        i = i + 1
+        enemyexecute(enemy, pttarget)
+
+
+def checkifvalidenemytarget(pttarget):
+    while "KO" in pttarget.status:
+        pttarget = random.choice(party)
+    return pttarget
+
+
+def enemyexecute(enemy, pttarget):
+    damage = damagecalc(round(enemy.attack * attackmods(enemy)), round(pttarget.defense * defensemods(pttarget)))
+    if pttarget.command == 2:
+        damage = round(damage / 2)
+        print("Damage partially blocked!")
+    damageresult(pttarget, damage)
 
 
 def checkifpartydefeat():
     for girls in party:
         if girls.currenthp <= 0 and "KO" not in girls.status:
+            girls.status.clear()
             girls.status.append("KO")
             girls.currenthp = 0
             print(f"{girls.name} was knocked out.")
