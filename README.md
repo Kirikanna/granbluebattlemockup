@@ -13,10 +13,13 @@ Blue potions<br>
 Toggle charge attacks<br>
 Manually choose to attack/defend/use skills for character you can select<br>
 Targeting is done with a number<br>
+Attack/defense modifier status<br>
+Poison status<br>
 
 TODO:<br>
 Clean up code so it's not 2000 if statements <br>
 Refine targeting <br>
+Status should be in own class <br>
 More player skills<br>
 Enemy skills<br>
 Summons<br>
