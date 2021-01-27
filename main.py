@@ -48,7 +48,7 @@ Boppin = Skills("Boppin' (5x multiplier)", 5, 5, [], 2, 1)
 Boppest = Skills("Boppest' (10x multiplier)", 10, 5, [], 3, 1)
 HealAll = Skills("Heal All' (10x multiplier)", 20, 5, [], 4, 1)
 Multibonk = Skills("Multibonk' (2x multiplier)", 2, 10, [], 7, 10)
-#Rage = Status("Rage")
+Rage = Status("Rage")
 #KnockOut = Status("KO")
 Megu.skill.append(Bop)
 Megu.skill.append(Boppin)
@@ -59,7 +59,7 @@ Tomoka = Character("Tomoka", 1000, 20, 0, 100, [], "", 2)
 
 Tomoka.status.append("Poison")
 Tomoka.status.append("Rage")
-#Tomoka.status.append(Rage)
+Tomoka.status.append(Rage)
 
 targettype = {0: "self", 1: "one enemy", 2: "all enemies", 3: "one ally(heal)",
               4: "whole party(heal)", 5: "random enemy",
@@ -73,9 +73,11 @@ LumberingStrike = EnemySkills("Lumber Strike", 20, [], 1)
 Dummy.skill.append(LumberingStrike)
 Dummy1 = Enemy("Dummy1", 30, 20, 1, [], "1", 2, 2)
 LumberingStrike2 = EnemySkills("Lumber Strikes", 20, [], 1)
-Dummy1.skill.append(LumberingStrike2)
 Dummy2 = Enemy("Dummy2", 30, 20, 1, [], "1", 3, 4)
 LumberingStrike3 = EnemySkills("Lumber Strikess", 20, [], 1)
+Dummy1.skill.append(LumberingStrike)
+Dummy1.skill.append(LumberingStrike2)
+Dummy1.skill.append(LumberingStrike3)
 Dummy2.skill.append(LumberingStrike3)
 
 Dummy2.status.append("Poison")
@@ -403,6 +405,11 @@ skillcalc = {
     7: singletargetmultihitskill,
                 }
 
+def executeenemyskill(attacker):
+    skillpick = random.choice(attacker.skill)
+    print(skillpick.name)
+
+
 def skilllist(girls):
     command = 0
     actualcommand = 0
@@ -560,24 +567,19 @@ def chainburstcheck():
 
 def enemyattack(enemy):
     i = 0
-    pttarget = random.choice(party)
-    while (bool(pttarget)) is False:
+    if enemy.turnsleft == 0:
+        print(f"{enemy.name} uses a skill!")
+        executeenemyskill(enemy)
+        enemy.turnsleft = enemy.turnsleft + enemy.cooldown
+    else:
         pttarget = random.choice(party)
-    pttarget = str(pttarget)
-    for girls in party:
-        if pttarget == girls.name:
-            if enemy.turnsleft == 0:
-                print(f"{enemy.name} uses a skill!")
-                print(f"{enemy.skill[0].name}")
-                enemy.turnsleft = enemy.turnsleft + enemy.cooldown
-            else:
-                print(f"{enemy.name} attacks {girls.name}!")
-                damage = damagecalc(round(enemy.attack*attackmods(enemy)), round(girls.defense*defensemods(girls)))
-                if girls.command == 2:
-                    damage = round(damage / 2)
-                    print("Damage partially blocked!")
-                damageresult(girls, damage)
-                i = i + 1
+        print(f"{enemy.name} attacks {pttarget.name}!")
+        damage = damagecalc(round(enemy.attack * attackmods(enemy)), round(pttarget.defense * defensemods(pttarget)))
+        if pttarget.command == 2:
+            damage = round(damage / 2)
+            print("Damage partially blocked!")
+        damageresult(pttarget, damage)
+        i = i + 1
 
 
 def checkifpartydefeat():
