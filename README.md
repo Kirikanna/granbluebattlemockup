@@ -15,17 +15,15 @@ Manually choose to attack/defend/use skills for character you can select<br>
 Targeting is done with a number<br>
 Attack/defense modifier status<br>
 Poison status<br>
+Enemy skills (one target attack/all target attack)<Br>
 
 TODO:<br>
 Clean up code so it's not 2000 if statements <br>
 Refine targeting <br>
-Status should be in own class <br>
 More player skills<br>
-Enemy skills<br>
-Summons<br>
+More enemy skills<br>
+Summons (although honestly they're just a glorified skill)<br>
 
 EVENTUALLY:<br>
 Character creation<br>
 
-Oops list:<br>
-Potions can target KO'ed members
