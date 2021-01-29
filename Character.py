@@ -37,7 +37,16 @@ class Character(object):
     def getstatus(self, status):
         statusdisplay = []
         for whatstat in status:
-            statusdisplay.append(whatstat.name)
+            statusdisplay.append(whatstat.name + self.displayturns(whatstat.turnsleft))
         return statusdisplay
 
+    def displayturns(self, turnsleft):
+        if turnsleft == 0:
+            return ""
+        turnsleft = f" [{turnsleft} turns left]"
+        return turnsleft
 
+#Create Characters
+# Character(name, maxhp, attack, defense, chargecap
+Megu = Character("Megu", 99999, 15, 0, 100)
+Tomoka = Character("Tomoka", 99999, 20, 0, 100)

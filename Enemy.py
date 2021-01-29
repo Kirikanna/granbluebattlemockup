@@ -28,6 +28,17 @@ class Enemy(object):
     def getstatus(self, status):
         statusdisplay = []
         for whatstat in status:
-            statusdisplay.append(whatstat.name)
+            statusdisplay.append(whatstat.name + self.displayturns(whatstat.turnsleft))
         return statusdisplay
 
+    def displayturns(self, turnsleft):
+        if turnsleft == 0:
+            return ""
+        turnsleft = f" [{turnsleft} turns left]"
+        return turnsleft
+
+# Create Enemy
+# Enemy(name, maxhp, attack, defense, chargecap, currentcharge
+Dummy = Enemy("Dummy", 200, 20, 20, [], "1", 1, 3)
+Dummy1 = Enemy("Dummy1", 30, 20, 1, [], "1", 2, 2)
+Dummy2 = Enemy("Dummy2", 30, 20, 1, [], "1", 3, 4)
